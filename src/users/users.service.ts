@@ -1,8 +1,12 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+	ConflictException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RegisterUserDTO } from 'src/users/dto/register-user.dto';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
+import { RegisterUser } from './types/register-user';
 
 @Injectable()
 export class UsersService {
@@ -19,7 +23,7 @@ export class UsersService {
 		return this.usersRepository.findOne({ where: { id } });
 	}
 
-	async create(newUserData: RegisterUserDTO): Promise<User> {
+	async create(newUserData: RegisterUser): Promise<User> {
 		const existingUser = await this.findByUsername(newUserData.username);
 		if (existingUser) {
 			throw new ConflictException(
@@ -29,5 +33,38 @@ export class UsersService {
 
 		const user = this.usersRepository.create(newUserData);
 		return this.usersRepository.save(user);
+	}
+
+	async getUser(userId: number): Promise<User | null> {
+		// const user: User | null = await this.usersRepository.findOne({
+		// 	where: { id: userId },
+		// 	relations: {
+		// 		articles: true,
+		// 	},
+		// 	select: {
+		// 		username: true,
+		// 		createdAt: true,
+		// 	},
+		// });
+
+		const user = await this.usersRepository
+			.createQueryBuilder('user')
+			.leftJoinAndSelect('user.articles', 'articles')
+			.where('user.id = :userId', { userId })
+			.select([
+				'user.username',
+				'user.createdAt',
+				'articles.id',
+				'articles.header',
+				//'articles.description',
+				'articles.createdAt',
+			])
+			.getOne();
+
+		if (!user) {
+			throw new NotFoundException('user not found');
+		}
+
+		return user;
 	}
 }

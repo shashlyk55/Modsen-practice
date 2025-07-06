@@ -5,7 +5,6 @@ import {
 	HttpStatus,
 	Post,
 	Req,
-	UnauthorizedException,
 	UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -37,9 +36,6 @@ export class AuthController {
 			loginUserDto.username,
 			loginUserDto.password,
 		);
-		if (!user) {
-			throw new UnauthorizedException();
-		}
 		return this.authService.login(user as User, req);
 	}
 
@@ -55,10 +51,8 @@ export class AuthController {
 	@UseGuards(AuthGuard('jwt-access'))
 	async logout(@Req() req: Request) {
 		const authHeader = req.headers.authorization;
-		const token = authHeader?.split(' ')[1].trim();
-		if (!token) {
-			throw new UnauthorizedException('token not found');
-		}
-		return this.authService.logout(token);
+		const accessToken = authHeader?.split(' ')[1].trim();
+
+		return this.authService.logout(accessToken);
 	}
 }

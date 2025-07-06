@@ -4,10 +4,10 @@ import { RegisterUserDTO } from '../users/dto/register-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ValidatedUser } from 'src/users/types/validated-user';
-import { jwtConstants } from './jwt-constants';
 import { SessionService } from './session.service';
 import { Request } from 'express';
 import { User } from 'src/entities/user.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -15,16 +15,19 @@ export class AuthService {
 		private usersService: UsersService,
 		private jwtService: JwtService,
 		private sessionService: SessionService,
+		private config: ConfigService,
 	) {}
 
 	async register(registerUserDto: RegisterUserDTO) {
 		const user = await this.usersService.create(registerUserDto);
-		//const { password, ...result } = user;
 		return user;
 	}
 
-	async login(user: User, req: Request) {
-		const payload = { username: user.username, id: user.id };
+	async login(user: User | undefined | null, req: Request) {
+		if (!user) {
+			throw new UnauthorizedException();
+		}
+		const payload: ValidatedUser = { username: user.username, id: user.id };
 
 		const userAgent = req.headers['user-agent']
 			? req.headers['user-agent']
@@ -33,10 +36,14 @@ export class AuthService {
 		const expiresAt = new Date(
 			Date.now() +
 				Number.parseInt(
-					jwtConstants.refresh_expires_in.slice(
-						0,
-						jwtConstants.refresh_expires_in.length - 1,
-					),
+					this.config
+						.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
+						.slice(
+							0,
+							this.config.getOrThrow<string>(
+								'REFRESH_TOKEN_EXPIRES_IN',
+							).length - 1,
+						),
 				) *
 					24 *
 					60 *
@@ -45,13 +52,17 @@ export class AuthService {
 		);
 
 		const accessToken = this.jwtService.sign(payload, {
-			secret: jwtConstants.access_secret,
-			expiresIn: jwtConstants.access_expires_in,
+			secret: this.config.getOrThrow<string>('ACCESS_TOKEN_SECRET'),
+			expiresIn: this.config.getOrThrow<string>(
+				'ACCESS_TOKEN_EXPIRES_IN',
+			),
 		});
 
 		const refreshToken = this.jwtService.sign(payload, {
-			secret: jwtConstants.refresh_secret,
-			expiresIn: jwtConstants.refresh_expires_in,
+			secret: this.config.getOrThrow<string>('REFRESH_TOKEN_SECRET'),
+			expiresIn: this.config.getOrThrow<string>(
+				'REFRESH_TOKEN_EXPIRES_IN',
+			),
 		});
 
 		await this.sessionService.createSession(
@@ -83,11 +94,8 @@ export class AuthService {
 	}
 
 	async refreshTokens(refreshToken: string, req: Request) {
-		console.log(refreshToken);
-
 		const session =
 			await this.sessionService.findSessionByRefreshToken(refreshToken);
-		console.log(session);
 
 		if (!session) {
 			throw new UnauthorizedException('Invalid refresh token');
@@ -103,16 +111,23 @@ export class AuthService {
 		if (!user) {
 			throw new Error('user not found');
 		}
-		const newPayload = { username: user.username, id: user.id };
+		const newPayload: ValidatedUser = {
+			username: user.username,
+			id: user.id,
+		};
 
 		const newAccessToken = this.jwtService.sign(newPayload, {
-			secret: jwtConstants.access_secret,
-			expiresIn: jwtConstants.access_expires_in,
+			secret: this.config.getOrThrow<string>('ACCESS_TOKEN_SECRET'),
+			expiresIn: this.config.getOrThrow<string>(
+				'ACCESS_TOKEN_EXPIRES_IN',
+			),
 		});
 
 		const newRefreshToken = this.jwtService.sign(newPayload, {
-			secret: jwtConstants.refresh_secret,
-			expiresIn: jwtConstants.refresh_expires_in,
+			secret: this.config.getOrThrow<string>('REFRESH_TOKEN_SECRET'),
+			expiresIn: this.config.getOrThrow<string>(
+				'REFRESH_TOKEN_EXPIRES_IN',
+			),
 		});
 
 		const userAgent = req.headers['user-agent']
@@ -122,10 +137,14 @@ export class AuthService {
 		const expiresAt = new Date(
 			Date.now() +
 				Number.parseInt(
-					jwtConstants.refresh_expires_in.slice(
-						0,
-						jwtConstants.refresh_expires_in.length - 1,
-					),
+					this.config
+						.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
+						.slice(
+							0,
+							this.config.getOrThrow<string>(
+								'REFRESH_TOKEN_EXPIRES_IN',
+							).length - 1,
+						),
 				) *
 					24 *
 					60 *
@@ -148,8 +167,11 @@ export class AuthService {
 		};
 	}
 
-	async logout(accessToken: string) {
+	async logout(accessToken: string | undefined) {
+		if (!accessToken) {
+			throw new UnauthorizedException('token not found');
+		}
 		await this.sessionService.deleteSession(accessToken);
-		return { message: 'Successfully logged out' };
+		return { message: 'successfully logged out' };
 	}
 }

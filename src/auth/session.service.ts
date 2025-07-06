@@ -33,8 +33,6 @@ export class SessionService {
 	async findSessionByRefreshToken(
 		refreshToken: string,
 	): Promise<Session | null> {
-		//console.log(await this.hashToken(refreshToken));
-
 		return this.sessionRepository.findOne({
 			where: { refreshTokenHash: refreshToken },
 			relations: ['user'],
