@@ -36,17 +36,6 @@ export class UsersService {
 	}
 
 	async getUser(userId: number): Promise<User | null> {
-		// const user: User | null = await this.usersRepository.findOne({
-		// 	where: { id: userId },
-		// 	relations: {
-		// 		articles: true,
-		// 	},
-		// 	select: {
-		// 		username: true,
-		// 		createdAt: true,
-		// 	},
-		// });
-
 		const user = await this.usersRepository
 			.createQueryBuilder('user')
 			.leftJoinAndSelect('user.articles', 'articles')

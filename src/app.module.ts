@@ -9,6 +9,7 @@ import { Comment } from './entities/comment.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { Session } from './entities/session.entity';
+import { ArticlesModule } from './articles/articles.module';
 
 @Module({
 	imports: [
@@ -32,6 +33,7 @@ import { Session } from './entities/session.entity';
 		}),
 		AuthModule,
 		UsersModule,
+		ArticlesModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],

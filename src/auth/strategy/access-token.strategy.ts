@@ -3,9 +3,14 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Payload } from '../types/payload';
 import { SessionService } from '../session.service';
 import { Request } from 'express';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+	Injectable,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ValidatedUser } from 'src/users/types/validated-user';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class AccessTokenStrategy extends PassportStrategy(
@@ -15,6 +20,7 @@ export class AccessTokenStrategy extends PassportStrategy(
 	constructor(
 		private sessionService: SessionService,
 		private config: ConfigService,
+		private userService: UsersService,
 	) {
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -37,6 +43,14 @@ export class AccessTokenStrategy extends PassportStrategy(
 			throw new UnauthorizedException('Session not found');
 		}
 
-		return { username: payload.username, id: payload.id };
+		const user = await this.userService.findById(payload.id);
+
+		if (!user) {
+			throw new NotFoundException('user not found');
+		}
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { password, ...result } = user;
+
+		return result;
 	}
 }

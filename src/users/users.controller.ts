@@ -16,15 +16,17 @@ import { ValidatedUser } from './types/validated-user';
 export class UsersController {
 	constructor(private usersService: UsersService) {}
 
-	@Get('me')
+	@Get('/me')
 	@HttpCode(HttpStatus.OK)
 	async getMe(@Req() req: Request) {
-		return this.usersService.getUser((req.user as ValidatedUser).id);
+		const userId = (req.user as ValidatedUser).id;
+		return this.usersService.getUser(userId);
 	}
 
-	@Get(':id')
+	@Get('/:id')
 	@HttpCode(HttpStatus.OK)
 	async getUser(@Req() req: Request) {
-		return this.usersService.getUser(+req.params.id);
+		const userId = +req.params.id;
+		return this.usersService.getUser(userId);
 	}
 }
