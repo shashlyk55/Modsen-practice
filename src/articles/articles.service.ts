@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Article } from 'src/entities/article.entity';
 import { Repository } from 'typeorm';
-import { NewArticleDTO } from './dto/new-article.dto';
+import { CreateArticleDTO } from './dto/create-article.dto';
 import { UpdateArticleDTO } from './dto/update-article.dto';
-import { User } from 'src/users/types/user';
 
 @Injectable()
 export class ArticlesService {
@@ -16,41 +15,43 @@ export class ArticlesService {
 	async findById(id: number) {
 		const article = await this.articlesRepository.findOne({
 			where: { id },
-			relations: {
-				author: true,
-			},
 		});
 		return article;
 	}
 
 	async findAll() {
+		const articles = await this.articlesRepository.find();
+		return articles;
+	}
+
+	async findByUserId(userId: number) {
 		const articles = await this.articlesRepository.find({
-			relations: {
-				author: true,
-			},
+			where: { authorId: userId },
 		});
 		return articles;
 	}
 
-	async create(newArticleData: NewArticleDTO, author: User) {
-		const article = this.articlesRepository.create({
+	async create(newArticleData: CreateArticleDTO, authorId: number) {
+		const createdArticle = this.articlesRepository.create({
 			...newArticleData,
-			author,
+			authorId,
 		});
-		return this.articlesRepository.save(article);
+
+		return await this.articlesRepository.save(createdArticle);
 	}
 
 	async delete(id: number) {
 		const result = await this.articlesRepository.delete({ id });
-		console.log(result);
-		return result;
+		if (!result.affected) {
+			throw new NotFoundException('article not found');
+		}
 	}
 
-	async edit(id: number, newArticleData: UpdateArticleDTO) {
-		const article = await this.articlesRepository.update(
-			{ id },
-			newArticleData,
-		);
+	async update(id: number, newArticleData: UpdateArticleDTO) {
+		const article = await this.articlesRepository.preload({
+			id,
+			...newArticleData,
+		});
 		return article;
 	}
 }

@@ -24,6 +24,9 @@ export class Article {
 	@ManyToOne(() => User, (user) => user.articles)
 	author: User;
 
+	@Column()
+	authorId: number;
+
 	@CreateDateColumn()
 	createdAt: Date;
 

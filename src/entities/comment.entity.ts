@@ -26,6 +26,12 @@ export class Comment {
 	@ManyToOne(() => User, (user) => user.comments)
 	author: User;
 
+	@Column()
+	authorId: number;
+
 	@ManyToOne(() => Article, (article) => article.comments)
 	article: Article;
+
+	@Column()
+	articleId: number;
 }

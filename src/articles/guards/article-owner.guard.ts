@@ -32,7 +32,7 @@ export class ArticleOwnerGuard implements CanActivate {
 			throw new NotFoundException('article not found');
 		}
 
-		if (article.author.id !== userId) {
+		if (article.authorId !== userId) {
 			throw new ForbiddenException(
 				'not enough permission to modify this article',
 			);

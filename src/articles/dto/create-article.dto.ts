@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
-export class NewArticleDTO {
+export class CreateArticleDTO {
 	@IsString()
 	@IsNotEmpty()
 	@MaxLength(100)

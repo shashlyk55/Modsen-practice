@@ -15,10 +15,10 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { ArticlesService } from './articles.service';
-import { NewArticleDTO } from './dto/new-article.dto';
-import { User } from 'src/users/types/user';
+import { CreateArticleDTO } from './dto/create-article.dto';
 import { UpdateArticleDTO } from './dto/update-article.dto';
 import { ArticleOwnerGuard } from './guards/article-owner.guard';
+import { ValidatedUser } from 'src/users/types/validated-user';
 
 @UseGuards(AuthGuard('jwt-access'))
 @Controller('articles')
@@ -53,12 +53,29 @@ export class ArticlesController {
 		return articles;
 	}
 
+	@Get('/user/:userId')
+	@HttpCode(HttpStatus.OK)
+	async getByUserId(@Req() req: Request) {
+		const userId = +req.params.userId;
+		const articles = await this.articlesService.findByUserId(userId);
+
+		if (!articles) {
+			throw new HttpException(
+				'articles not found',
+				HttpStatus.NO_CONTENT,
+			);
+		}
+
+		return articles;
+	}
+
 	@Post('/')
 	@HttpCode(HttpStatus.CREATED)
-	async create(@Req() req: Request, @Body() newArticleDto: NewArticleDTO) {
+	async create(@Req() req: Request, @Body() newArticleDto: CreateArticleDTO) {
+		const userId = (req.user as ValidatedUser).id;
 		const newArticle = await this.articlesService.create(
 			newArticleDto,
-			req.user as User,
+			userId,
 		);
 		return newArticle;
 	}
@@ -68,8 +85,7 @@ export class ArticlesController {
 	@HttpCode(HttpStatus.OK)
 	async delete(@Req() req: Request) {
 		const articleId = +req.params.id;
-		const deletedArticle = await this.articlesService.delete(articleId);
-		return deletedArticle;
+		return await this.articlesService.delete(articleId);
 	}
 
 	@UseGuards(ArticleOwnerGuard)
@@ -80,7 +96,7 @@ export class ArticlesController {
 		@Body() updateArticleDto: UpdateArticleDTO,
 	) {
 		const articleId = +req.params.id;
-		const updatedArticle = await this.articlesService.edit(
+		const updatedArticle = await this.articlesService.update(
 			articleId,
 			updateArticleDto,
 		);
