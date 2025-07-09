@@ -11,6 +11,7 @@ import { Article } from './article.entity';
 import { Comment } from './comment.entity';
 import * as bcrypt from 'bcrypt';
 import { Session } from './session.entity';
+import { Reaction } from './reaction';
 
 @Entity()
 export class User {
@@ -34,12 +35,23 @@ export class User {
 	@UpdateDateColumn()
 	updatedAt: Date;
 
-	@OneToMany(() => Article, (article) => article.author)
+	@OneToMany(() => Article, (article) => article.author, {
+		onDelete: 'CASCADE',
+	})
 	articles: Article[];
 
-	@OneToMany(() => Comment, (comment) => comment.author)
+	@OneToMany(() => Comment, (comment) => comment.author, {
+		onDelete: 'CASCADE',
+	})
 	comments: Comment[];
 
-	@OneToMany(() => Session, (session) => session.user)
+	@OneToMany(() => Session, (session) => session.user, {
+		onDelete: 'CASCADE',
+	})
 	sessions: Session[];
+
+	@OneToMany(() => Reaction, (reaction) => reaction.user, {
+		onDelete: 'CASCADE',
+	})
+	reactions: Reaction[];
 }

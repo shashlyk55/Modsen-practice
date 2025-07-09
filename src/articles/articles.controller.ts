@@ -28,10 +28,14 @@ export class ArticlesController {
 	@Get('/:id')
 	@HttpCode(HttpStatus.OK)
 	async getOne(@Req() req: Request) {
-		const articleId = +req.params.id;
-		const article = await this.articlesService.findById(articleId);
+		const userId = (req.user as ValidatedUser).id;
+		const articleId = parseInt(req.params.id);
+		const article = await this.articlesService.findByIdWithReactions(
+			articleId,
+			userId,
+		);
 
-		if (!article) {
+		if (article == null) {
 			throw new NotFoundException('article not found');
 		}
 
@@ -40,10 +44,28 @@ export class ArticlesController {
 
 	@Get('/')
 	@HttpCode(HttpStatus.OK)
-	async getAll() {
-		const articles = await this.articlesService.findAll();
+	async getAll(@Req() req: Request) {
+		const userId = (req.user as ValidatedUser).id;
+		const articles =
+			await this.articlesService.findAllWithReactions(userId);
 
-		if (!articles) {
+		if (articles == null) {
+			throw new HttpException(
+				'articles not found',
+				HttpStatus.NO_CONTENT,
+			);
+		}
+
+		return articles;
+	}
+
+	@Get('/user/me')
+	@HttpCode(HttpStatus.OK)
+	async getCurrentUserArticles(@Req() req: Request) {
+		const userId = (req.user as ValidatedUser).id;
+		const articles = await this.articlesService.findByUserId(userId);
+
+		if (articles == null) {
 			throw new HttpException(
 				'articles not found',
 				HttpStatus.NO_CONTENT,
@@ -56,10 +78,10 @@ export class ArticlesController {
 	@Get('/user/:userId')
 	@HttpCode(HttpStatus.OK)
 	async getByUserId(@Req() req: Request) {
-		const userId = +req.params.userId;
+		const userId = parseInt(req.params.userId);
 		const articles = await this.articlesService.findByUserId(userId);
 
-		if (!articles) {
+		if (articles == null) {
 			throw new HttpException(
 				'articles not found',
 				HttpStatus.NO_CONTENT,
@@ -84,7 +106,7 @@ export class ArticlesController {
 	@Delete('/:id')
 	@HttpCode(HttpStatus.OK)
 	async delete(@Req() req: Request) {
-		const articleId = +req.params.id;
+		const articleId = parseInt(req.params.id);
 		return await this.articlesService.delete(articleId);
 	}
 
@@ -95,7 +117,7 @@ export class ArticlesController {
 		@Req() req: Request,
 		@Body() updateArticleDto: UpdateArticleDTO,
 	) {
-		const articleId = +req.params.id;
+		const articleId = parseInt(req.params.id);
 		const updatedArticle = await this.articlesService.update(
 			articleId,
 			updateArticleDto,

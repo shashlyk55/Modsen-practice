@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Comment } from './comment.entity';
+import { Reaction } from './reaction';
 
 @Entity()
 export class Article {
@@ -21,7 +22,7 @@ export class Article {
 	@Column()
 	description: string;
 
-	@ManyToOne(() => User, (user) => user.articles)
+	@ManyToOne(() => User, (user) => user.articles, { onDelete: 'CASCADE' })
 	author: User;
 
 	@Column()
@@ -33,6 +34,13 @@ export class Article {
 	@UpdateDateColumn()
 	updatedAt: Date;
 
-	@OneToMany(() => Comment, (comment) => comment.article)
+	@OneToMany(() => Comment, (comment) => comment.article, {
+		onDelete: 'CASCADE',
+	})
 	comments: Comment[];
+
+	@OneToMany(() => Reaction, (reaction) => reaction.article, {
+		onDelete: 'CASCADE',
+	})
+	reactions: Reaction[];
 }

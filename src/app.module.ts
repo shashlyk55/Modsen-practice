@@ -11,6 +11,8 @@ import { UsersModule } from './users/users.module';
 import { Session } from './entities/session.entity';
 import { ArticlesModule } from './articles/articles.module';
 import { CommentsModule } from './comments/comments.module';
+import { ReactionsModule } from './reactions/reactions.module';
+import { Reaction } from './entities/reaction';
 
 @Module({
 	imports: [
@@ -28,7 +30,7 @@ import { CommentsModule } from './comments/comments.module';
 				username: config.get<string>('DB_USERNAME'),
 				password: config.get<string>('DB_PASSWORD'),
 				database: config.get<string>('DB_NAME'),
-				entities: [User, Article, Comment, Session],
+				entities: [User, Article, Comment, Session, Reaction],
 				synchronize: true,
 			}),
 		}),
@@ -36,6 +38,7 @@ import { CommentsModule } from './comments/comments.module';
 		UsersModule,
 		ArticlesModule,
 		CommentsModule,
+		ReactionsModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],
