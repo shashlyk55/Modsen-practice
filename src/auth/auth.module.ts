@@ -6,24 +6,16 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { RefreshTokenStrategy } from './strategy/refresh-token.strategy';
 import { AccessTokenStrategy } from './strategy/access-token.strategy';
-import { SessionService } from './session.service';
-import { Session } from 'src/entities/session.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { SessionsModule } from 'src/sessions/sessions.module';
 
 @Module({
-	imports: [
-		UsersModule,
-		PassportModule,
-		JwtModule,
-		TypeOrmModule.forFeature([Session]),
-	],
+	imports: [UsersModule, PassportModule, JwtModule, SessionsModule],
 	controllers: [AuthController],
 	providers: [
 		AuthService,
 		JwtService,
 		RefreshTokenStrategy,
 		AccessTokenStrategy,
-		SessionService,
 	],
 	exports: [AuthService],
 })

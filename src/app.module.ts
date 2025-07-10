@@ -13,6 +13,7 @@ import { ArticlesModule } from './articles/articles.module';
 import { CommentsModule } from './comments/comments.module';
 import { ReactionsModule } from './reactions/reactions.module';
 import { Reaction } from './entities/reaction';
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
 	imports: [
@@ -39,6 +40,7 @@ import { Reaction } from './entities/reaction';
 		ArticlesModule,
 		CommentsModule,
 		ReactionsModule,
+		SessionsModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],

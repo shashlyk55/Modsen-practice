@@ -4,7 +4,7 @@ import { RegisterUserDTO } from '../users/dto/register-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ValidatedUser } from 'src/users/types/validated-user';
-import { SessionService } from './session.service';
+import { SessionsService } from '../sessions/sessions.service';
 import { Request } from 'express';
 import { User } from 'src/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
@@ -14,7 +14,7 @@ export class AuthService {
 	constructor(
 		private usersService: UsersService,
 		private jwtService: JwtService,
-		private sessionService: SessionService,
+		private sessionService: SessionsService,
 		private config: ConfigService,
 	) {}
 

@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 
 @Injectable()
-export class SessionService {
+export class SessionsService {
 	constructor(
 		@InjectRepository(Session)
 		private sessionRepository: Repository<Session>,
@@ -48,25 +48,27 @@ export class SessionService {
 		});
 	}
 
-	async deleteSession(accessToken: string): Promise<void> {
+	async deleteSession(accessToken: string) {
 		await this.sessionRepository.delete({
 			accessTokenHash: accessToken,
 		});
 	}
 
-	async deleteAllSessionsForUser(userId: number): Promise<void> {
-		await this.sessionRepository
+	async deleteAllSessionsForUser(userId: number) {
+		const deletedSessions = await this.sessionRepository
 			.createQueryBuilder()
 			.delete()
 			.where('userId = :userId', { userId })
 			.execute();
+		return deletedSessions.affected ? deletedSessions.affected : 0;
 	}
 
-	async cleanExpiredSessions(): Promise<void> {
-		await this.sessionRepository
+	async cleanExpiredSessions() {
+		const expiredSessions = await this.sessionRepository
 			.createQueryBuilder()
 			.delete()
 			.where('expiresAt < :now', { now: new Date() })
 			.execute();
+		return expiredSessions.affected ? expiredSessions.affected : 0;
 	}
 }

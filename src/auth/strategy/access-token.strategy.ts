@@ -1,7 +1,7 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Payload } from '../types/payload';
-import { SessionService } from '../session.service';
+import { SessionsService } from '../../sessions/sessions.service';
 import { Request } from 'express';
 import {
 	Injectable,
@@ -18,7 +18,7 @@ export class AccessTokenStrategy extends PassportStrategy(
 	'jwt-access',
 ) {
 	constructor(
-		private sessionService: SessionService,
+		private sessionService: SessionsService,
 		private config: ConfigService,
 		private userService: UsersService,
 	) {
