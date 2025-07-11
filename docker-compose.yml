@@ -1,0 +1,44 @@
+#version: '3.8'
+
+services:
+    backend:
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        container_name: nestjs-blog-app-backend
+        image: shashlyk55/nestjs-blog-app-backend:1.0
+        restart: always
+        env_file:
+            - .env
+        ports:
+            - '3000:3000'
+        networks:
+            - network
+        depends_on:
+            postgre-db:
+                condition: service_healthy
+
+    postgre-db:
+        image: postgres:15-alpine
+        container_name: blog-app-postgre
+        environment:
+            POSTGRES_USER: ${DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME} -d ${DB_NAME}']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        ports:
+            - '5432:5432'
+        volumes:
+            - postgre_data:/db/postgresql/data
+        networks:
+            - network
+
+networks:
+    network:
+
+volumes:
+    postgre_data:
