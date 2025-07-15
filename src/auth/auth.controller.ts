@@ -43,7 +43,7 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@UseGuards(AuthGuard('jwt-refresh'))
 	refresh(@Req() req: Request & { user: JwtPayloadRefreshToken }) {
-		return this.authService.refreshTokens(req.user.refresh_token, req);
+		return this.authService.refreshTokens(req.user.refreshToken, req);
 	}
 
 	@Post('logout')

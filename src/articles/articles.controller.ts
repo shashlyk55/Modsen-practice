@@ -19,18 +19,34 @@ import { CreateArticleDTO } from './dto/create-article.dto';
 import { UpdateArticleDTO } from './dto/update-article.dto';
 import { ArticleOwnerGuard } from './guards/article-owner.guard';
 import { ValidatedUser } from 'src/users/types/validated-user';
+// import { ArticleFilterDTO } from './dto/article-filter.dto';
 
 @UseGuards(AuthGuard('jwt-access'))
 @Controller('articles')
 export class ArticlesController {
 	constructor(private articlesService: ArticlesService) {}
 
-	@Get('/:id')
+	// @Get('/filter')
+	// async filterArticles(
+	// 	@Query()
+	// 	filterDto: ArticleFilterDTO,
+	// ) {
+	// 	const filter = {
+	// 		tags: filterDto['tags[]'],
+	// 		usernames: filterDto['usernames[]'],
+	// 		...filterDto,
+	// 	};
+	// 	console.log(filterDto);
+
+	// 	return this.articlesService.filterArticles(filter);
+	// }
+
+	@Get('/:articleId')
 	@HttpCode(HttpStatus.OK)
 	async getOne(@Req() req: Request) {
 		const userId = (req.user as ValidatedUser).id;
-		const articleId = parseInt(req.params.id);
-		const article = await this.articlesService.findByIdWithReactions(
+		const articleId = parseInt(req.params.articleId);
+		const article = await this.articlesService.findByIdWithAdditions(
 			articleId,
 			userId,
 		);
@@ -47,7 +63,7 @@ export class ArticlesController {
 	async getAll(@Req() req: Request) {
 		const userId = (req.user as ValidatedUser).id;
 		const articles =
-			await this.articlesService.findAllWithReactions(userId);
+			await this.articlesService.findAllWithAdditions(userId);
 
 		if (articles == null) {
 			throw new HttpException(
@@ -103,21 +119,21 @@ export class ArticlesController {
 	}
 
 	@UseGuards(ArticleOwnerGuard)
-	@Delete('/:id')
+	@Delete('/:articleId')
 	@HttpCode(HttpStatus.OK)
 	async delete(@Req() req: Request) {
-		const articleId = parseInt(req.params.id);
+		const articleId = parseInt(req.params.articleId);
 		return await this.articlesService.delete(articleId);
 	}
 
 	@UseGuards(ArticleOwnerGuard)
-	@Patch('/:id')
+	@Patch('/:articleId')
 	@HttpCode(HttpStatus.OK)
 	async edit(
 		@Req() req: Request,
 		@Body() updateArticleDto: UpdateArticleDTO,
 	) {
-		const articleId = parseInt(req.params.id);
+		const articleId = parseInt(req.params.articleId);
 		const updatedArticle = await this.articlesService.update(
 			articleId,
 			updateArticleDto,

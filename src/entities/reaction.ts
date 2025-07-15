@@ -12,25 +12,25 @@ import { User } from './user.entity';
 @Entity()
 export class Reaction {
 	@PrimaryGeneratedColumn()
-	id: number;
+	id!: number;
 
 	@Column({ type: 'enum', enum: ReactionType })
-	type: ReactionType;
+	type!: ReactionType;
 
 	@ManyToOne(() => User, (user) => user.reactions, { onDelete: 'CASCADE' })
-	user: User;
+	user!: User;
 
 	@Column()
-	userId: number;
+	userId!: number;
 
 	@ManyToOne(() => Article, (article) => article.reactions, {
 		onDelete: 'CASCADE',
 	})
-	article: Article;
+	article!: Article;
 
 	@Column()
-	articleId: number;
+	articleId!: number;
 
 	@CreateDateColumn()
-	createdAt: Date;
+	createdAt!: Date;
 }

@@ -1,6 +1,10 @@
 import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterUserDTO {
+	constructor(username: string, password: string) {
+		this.username = username;
+		this.password = password;
+	}
 	@IsString()
 	@MinLength(3)
 	@MaxLength(20)

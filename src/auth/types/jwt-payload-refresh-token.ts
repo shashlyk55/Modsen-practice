@@ -1,5 +1,9 @@
 import { Payload } from './payload';
 
 export class JwtPayloadRefreshToken extends Payload {
-	refresh_token: string;
+	constructor(userId: number, username: string, refreshToken: string) {
+		super(userId, username);
+		this.refreshToken = refreshToken;
+	}
+	refreshToken: string;
 }

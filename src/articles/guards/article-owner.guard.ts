@@ -19,7 +19,7 @@ export class ArticleOwnerGuard implements CanActivate {
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest<Request>();
-		const articleId = +request.params.id;
+		const articleId = parseInt(request.params.articleId);
 		const userId = (request.user as User).id;
 
 		if (!userId) {

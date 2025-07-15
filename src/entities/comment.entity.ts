@@ -12,28 +12,28 @@ import { Article } from './article.entity';
 @Entity()
 export class Comment {
 	@PrimaryGeneratedColumn()
-	id: number;
+	id!: number;
 
 	@Column()
-	text: string;
+	text!: string;
 
 	@CreateDateColumn()
-	createdAt: Date;
+	createdAt!: Date;
 
 	@UpdateDateColumn()
-	updatedAt: Date;
+	updatedAt!: Date;
 
 	@ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
-	author: User;
+	author!: User;
 
 	@Column()
-	authorId: number;
+	authorId!: number;
 
 	@ManyToOne(() => Article, (article) => article.comments, {
 		onDelete: 'CASCADE',
 	})
-	article: Article;
+	article!: Article;
 
 	@Column()
-	articleId: number;
+	articleId!: number;
 }

@@ -16,13 +16,13 @@ import { Reaction } from './reaction';
 @Entity()
 export class User {
 	@PrimaryGeneratedColumn()
-	id: number;
+	id!: number;
 
 	@Column({ unique: true })
-	username: string;
+	username!: string;
 
 	@Column()
-	password: string;
+	password!: string;
 
 	@BeforeInsert()
 	async hashPassword() {
@@ -30,28 +30,28 @@ export class User {
 	}
 
 	@CreateDateColumn()
-	createdAt: Date;
+	createdAt!: Date;
 
 	@UpdateDateColumn()
-	updatedAt: Date;
+	updatedAt!: Date;
 
 	@OneToMany(() => Article, (article) => article.author, {
 		onDelete: 'CASCADE',
 	})
-	articles: Article[];
+	articles!: Article[];
 
 	@OneToMany(() => Comment, (comment) => comment.author, {
 		onDelete: 'CASCADE',
 	})
-	comments: Comment[];
+	comments!: Comment[];
 
 	@OneToMany(() => Session, (session) => session.user, {
 		onDelete: 'CASCADE',
 	})
-	sessions: Session[];
+	sessions!: Session[];
 
 	@OneToMany(() => Reaction, (reaction) => reaction.user, {
 		onDelete: 'CASCADE',
 	})
-	reactions: Reaction[];
+	reactions!: Reaction[];
 }

@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from './entities/user.entity';
@@ -14,6 +12,8 @@ import { CommentsModule } from './comments/comments.module';
 import { ReactionsModule } from './reactions/reactions.module';
 import { Reaction } from './entities/reaction';
 import { SessionsModule } from './sessions/sessions.module';
+import { Tag } from './entities/tag.entity';
+import { TagsModule } from './tags/tags.module';
 
 @Module({
 	imports: [
@@ -31,7 +31,7 @@ import { SessionsModule } from './sessions/sessions.module';
 				username: config.get<string>('DB_USERNAME'),
 				password: config.get<string>('DB_PASSWORD'),
 				database: config.get<string>('DB_NAME'),
-				entities: [User, Article, Comment, Session, Reaction],
+				entities: [User, Article, Comment, Session, Reaction, Tag],
 				synchronize: true,
 			}),
 		}),
@@ -41,8 +41,7 @@ import { SessionsModule } from './sessions/sessions.module';
 		CommentsModule,
 		ReactionsModule,
 		SessionsModule,
+		TagsModule,
 	],
-	controllers: [AppController],
-	providers: [AppService],
 })
 export class AppModule {}

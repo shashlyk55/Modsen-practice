@@ -79,7 +79,7 @@ export class ReactionsService {
 		});
 		await this.reactionsRepository.save(reaction);
 
-		return this.articlesService.findByIdWithReactions(articleId, userId);
+		return this.articlesService.findByIdWithAdditions(articleId, userId);
 	}
 
 	private async deleteReaction(articleId: number, userId: number) {
@@ -98,7 +98,7 @@ export class ReactionsService {
 			articleId: articleId,
 		});
 
-		return this.articlesService.findByIdWithReactions(articleId, userId);
+		return this.articlesService.findByIdWithAdditions(articleId, userId);
 	}
 
 	private async changeReactionType(
@@ -116,6 +116,6 @@ export class ReactionsService {
 			},
 		);
 
-		return this.articlesService.findByIdWithReactions(articleId, userId);
+		return this.articlesService.findByIdWithAdditions(articleId, userId);
 	}
 }
