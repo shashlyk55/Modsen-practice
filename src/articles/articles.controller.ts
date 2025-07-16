@@ -24,6 +24,7 @@ import { UpdateArticleDTO } from './dto/update-article.dto';
 import { ArticleOwnerGuard } from './guards/article-owner.guard';
 import { ValidatedUser } from 'src/users/types/validated-user';
 import { SearchArticleDTO } from './dto/search-article.dto';
+import { FilterArticlesDTO } from './dto/article-filter.dto';
 
 @UseGuards(AuthGuard('jwt-access'))
 @Controller('articles')
@@ -37,6 +38,24 @@ export class ArticlesController {
 		searchDto: SearchArticleDTO,
 	) {
 		const articles = await this.articlesService.search(searchDto);
+
+		if (articles == null) {
+			throw new HttpException(
+				'articles not found',
+				HttpStatus.NO_CONTENT,
+			);
+		}
+
+		return articles;
+	}
+
+	@Get('/filter')
+	@HttpCode(HttpStatus.OK)
+	async filter(
+		@Query(new ValidationPipe({ transform: true }))
+		filterDto: FilterArticlesDTO,
+	) {
+		const articles = await this.articlesService.filter(filterDto);
 
 		if (articles == null) {
 			throw new HttpException(

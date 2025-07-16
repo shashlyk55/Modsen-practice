@@ -7,6 +7,7 @@ import { UpdateArticleDTO } from './dto/update-article.dto';
 import { ReactionType } from 'src/reactions/reactions';
 import { Reaction } from 'src/entities/reaction';
 import { SearchArticleDTO } from './dto/search-article.dto';
+import { FilterArticlesDTO } from './dto/article-filter.dto';
 // import { Tag } from 'src/entities/tag.entity';
 // import { AllowedTags } from 'src/tags/allowed-tags';
 
@@ -149,6 +150,40 @@ export class ArticlesService {
 				itemCount: items.length,
 				itemsPerPage: limit,
 				totalPages,
+				currentPage: page,
+			},
+		};
+	}
+
+	async filter(filterDto: FilterArticlesDTO) {
+		const { tags, page = 1, limit = 10 } = filterDto;
+
+		const query = this.articlesRepository
+			.createQueryBuilder('article')
+			.leftJoinAndSelect('article.author', 'author')
+			.leftJoinAndSelect('article.tags', 'tags')
+			.orderBy('article.createdAt', 'DESC')
+			.skip((page - 1) * limit)
+			.take(limit);
+
+		if (tags && tags.length > 0) {
+			query.innerJoin(
+				'article.tags',
+				'filterTag',
+				'filterTag.name IN (:...tags)',
+				{ tags },
+			);
+		}
+
+		const [items, total] = await query.getManyAndCount();
+
+		return {
+			items,
+			meta: {
+				totalItems: total,
+				itemCount: items.length,
+				itemsPerPage: limit,
+				totalPages: Math.ceil(total / limit),
 				currentPage: page,
 			},
 		};
