@@ -5,8 +5,8 @@ import {
 	Injectable,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { User } from 'src/entities/user.entity';
 import { CommentsService } from '../comments.service';
+import { ValidatedUser } from 'src/users/types/validated-user';
 
 @Injectable()
 export class CommentOwnerGuard implements CanActivate {
@@ -14,8 +14,8 @@ export class CommentOwnerGuard implements CanActivate {
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest<Request>();
-		const commentId = +request.params.commentId;
-		const userId = (request.user as User).id;
+		const commentId = parseInt(request.params.commentId);
+		const userId = (request.user as ValidatedUser).id;
 
 		const comment = await this.commentsService.findById(commentId);
 

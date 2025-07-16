@@ -32,23 +32,18 @@ export class AuthService {
 		const userAgent = req.headers['user-agent']
 			? req.headers['user-agent']
 			: '';
-		const ipAddress = req.headers.host ? req.headers.host : '';
+		const ipAddress = req.ip ? req.ip : '';
+		const refreshTokenExpiresIn = Number.parseInt(
+			this.config
+				.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
+				.slice(
+					0,
+					this.config.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
+						.length - 1,
+				),
+		);
 		const expiresAt = new Date(
-			Date.now() +
-				Number.parseInt(
-					this.config
-						.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
-						.slice(
-							0,
-							this.config.getOrThrow<string>(
-								'REFRESH_TOKEN_EXPIRES_IN',
-							).length - 1,
-						),
-				) *
-					24 *
-					60 *
-					60 *
-					1000,
+			Date.now() + refreshTokenExpiresIn * 24 * 60 * 60 * 1000,
 		);
 
 		const accessToken = this.jwtService.sign(payload, {

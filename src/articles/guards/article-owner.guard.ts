@@ -6,21 +6,17 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { ArticlesService } from '../articles.service';
-//import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { User } from 'src/entities/user.entity';
+import { ValidatedUser } from 'src/users/types/validated-user';
 
 @Injectable()
 export class ArticleOwnerGuard implements CanActivate {
-	constructor(
-		private articleService: ArticlesService,
-		//private reflector: Reflector,
-	) {}
+	constructor(private articleService: ArticlesService) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest<Request>();
 		const articleId = parseInt(request.params.articleId);
-		const userId = (request.user as User).id;
+		const userId = (request.user as ValidatedUser).id;
 
 		if (!userId) {
 			throw new ForbiddenException('user not authentificated');

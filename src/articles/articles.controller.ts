@@ -7,10 +7,14 @@ import {
 	HttpException,
 	HttpStatus,
 	NotFoundException,
+	Param,
+	ParseIntPipe,
 	Patch,
 	Post,
+	Query,
 	Req,
 	UseGuards,
+	ValidationPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
@@ -19,33 +23,38 @@ import { CreateArticleDTO } from './dto/create-article.dto';
 import { UpdateArticleDTO } from './dto/update-article.dto';
 import { ArticleOwnerGuard } from './guards/article-owner.guard';
 import { ValidatedUser } from 'src/users/types/validated-user';
-// import { ArticleFilterDTO } from './dto/article-filter.dto';
+import { SearchArticleDTO } from './dto/search-article.dto';
 
 @UseGuards(AuthGuard('jwt-access'))
 @Controller('articles')
 export class ArticlesController {
 	constructor(private articlesService: ArticlesService) {}
 
-	// @Get('/filter')
-	// async filterArticles(
-	// 	@Query()
-	// 	filterDto: ArticleFilterDTO,
-	// ) {
-	// 	const filter = {
-	// 		tags: filterDto['tags[]'],
-	// 		usernames: filterDto['usernames[]'],
-	// 		...filterDto,
-	// 	};
-	// 	console.log(filterDto);
+	@Get('/search')
+	@HttpCode(HttpStatus.OK)
+	async search(
+		@Query(new ValidationPipe({ transform: true }))
+		searchDto: SearchArticleDTO,
+	) {
+		const articles = await this.articlesService.search(searchDto);
 
-	// 	return this.articlesService.filterArticles(filter);
-	// }
+		if (articles == null) {
+			throw new HttpException(
+				'articles not found',
+				HttpStatus.NO_CONTENT,
+			);
+		}
+
+		return articles;
+	}
 
 	@Get('/:articleId')
 	@HttpCode(HttpStatus.OK)
-	async getOne(@Req() req: Request) {
+	async getOne(
+		@Param('articleId', ParseIntPipe) articleId: number,
+		@Req() req: Request,
+	) {
 		const userId = (req.user as ValidatedUser).id;
-		const articleId = parseInt(req.params.articleId);
 		const article = await this.articlesService.findByIdWithAdditions(
 			articleId,
 			userId,
@@ -93,8 +102,7 @@ export class ArticlesController {
 
 	@Get('/user/:userId')
 	@HttpCode(HttpStatus.OK)
-	async getByUserId(@Req() req: Request) {
-		const userId = parseInt(req.params.userId);
+	async getByUserId(@Param('userId', ParseIntPipe) userId: number) {
 		const articles = await this.articlesService.findByUserId(userId);
 
 		if (articles == null) {
@@ -121,8 +129,7 @@ export class ArticlesController {
 	@UseGuards(ArticleOwnerGuard)
 	@Delete('/:articleId')
 	@HttpCode(HttpStatus.OK)
-	async delete(@Req() req: Request) {
-		const articleId = parseInt(req.params.articleId);
+	async delete(@Param('articleId', ParseIntPipe) articleId: number) {
 		return await this.articlesService.delete(articleId);
 	}
 
@@ -130,10 +137,9 @@ export class ArticlesController {
 	@Patch('/:articleId')
 	@HttpCode(HttpStatus.OK)
 	async edit(
-		@Req() req: Request,
+		@Param('articleId', ParseIntPipe) articleId: number,
 		@Body() updateArticleDto: UpdateArticleDTO,
 	) {
-		const articleId = parseInt(req.params.articleId);
 		const updatedArticle = await this.articlesService.update(
 			articleId,
 			updateArticleDto,

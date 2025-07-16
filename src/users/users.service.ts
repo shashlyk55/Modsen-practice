@@ -27,7 +27,7 @@ export class UsersService {
 		const existingUser = await this.findByUsername(newUserData.username);
 		if (existingUser) {
 			throw new ConflictException(
-				'Пользователь с таким именем или email уже существует',
+				'user with this email is already exists',
 			);
 		}
 

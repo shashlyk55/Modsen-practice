@@ -6,6 +6,7 @@ import { CreateArticleDTO } from './dto/create-article.dto';
 import { UpdateArticleDTO } from './dto/update-article.dto';
 import { ReactionType } from 'src/reactions/reactions';
 import { Reaction } from 'src/entities/reaction';
+import { SearchArticleDTO } from './dto/search-article.dto';
 // import { Tag } from 'src/entities/tag.entity';
 // import { AllowedTags } from 'src/tags/allowed-tags';
 
@@ -123,54 +124,33 @@ export class ArticlesService {
 		return article;
 	}
 
-	// async filterArticles(filter: {
-	// 	tags?: string[];
-	// 	usernames?: string[];
-	// 	page?: number;
-	// 	limit?: number;
-	// }) {
-	// 	console.log(filter);
+	async search(searchDto: SearchArticleDTO) {
+		const { q: query, page = 1, limit = 10 } = searchDto;
 
-	// 	const { tags, usernames, page = 1, limit = 10 } = filter;
+		const [items, total] = await this.articlesRepository
+			.createQueryBuilder('article')
+			.leftJoinAndSelect('article.author', 'author')
+			.leftJoinAndSelect('article.tags', 'tags')
+			.where(
+				'article.header ILIKE :query OR article.description ILIKE :query',
+				{ query: `%${query}%` },
+			)
+			.orderBy('article.createdAt', 'DESC')
+			.skip((page - 1) * limit)
+			.take(limit)
+			.getManyAndCount();
 
-	// 	const where: any = {};
+		const totalPages = Math.ceil(total / limit);
 
-	// 	// Фильтрация по авторам
-	// 	if (usernames?.length) {
-	// 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	// 		where.author = { username: In(usernames) };
-	// 	}
-
-	// 	// Фильтрация по тегам
-	// 	if (tags?.length) {
-	// 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	// 		where.tags = { name: In(tags) };
-	// 	}
-
-	// 	const [articles, total] = await this.articlesRepository.findAndCount({
-	// 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	// 		where,
-	// 		relations: ['author', 'tags'],
-	// 		skip: (page - 1) * limit,
-	// 		take: limit,
-	// 	});
-
-	// 	const filteredArticles = tags?.length
-	// 		? articles.filter((article) =>
-	// 				tags.every((tag: AllowedTags) =>
-	// 					article.tags.some((t: Tag) => t.name === tag),
-	// 				),
-	// 			)
-	// 		: articles;
-
-	// 	return {
-	// 		data: filteredArticles,
-	// 		meta: {
-	// 			total: filteredArticles.length,
-	// 			page,
-	// 			limit,
-	// 			last_page: Math.ceil(total / limit),
-	// 		},
-	// 	};
-	// }
+		return {
+			items,
+			meta: {
+				totalItems: total,
+				itemCount: items.length,
+				itemsPerPage: limit,
+				totalPages,
+				currentPage: page,
+			},
+		};
+	}
 }

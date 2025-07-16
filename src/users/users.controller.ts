@@ -1,8 +1,9 @@
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, ParseIntPipe } from '@nestjs/common';
 import {
 	Controller,
 	Get,
 	HttpCode,
+	Param,
 	Req,
 	UseGuards,
 } from '@nestjs/common/decorators';
@@ -23,10 +24,10 @@ export class UsersController {
 		return this.usersService.getUser(userId);
 	}
 
-	@Get('/:id')
+	@Get('/:userId')
 	@HttpCode(HttpStatus.OK)
-	async getUser(@Req() req: Request) {
-		const userId = +req.params.id;
+	async getUser(@Param('userId', ParseIntPipe) userId: number) {
+		//const userId = +req.params.userId;
 		return this.usersService.getUser(userId);
 	}
 }
