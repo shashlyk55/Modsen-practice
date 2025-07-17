@@ -36,25 +36,18 @@ export class UsersService {
 	}
 
 	async getUser(userId: number): Promise<User | null> {
-		// const user = await this.usersRepository
-		// 	.createQueryBuilder('user')
-		// 	.leftJoinAndSelect('user.articles', 'articles')
-		// 	.where('user.id = :userId', { userId })
-		// 	.select([
-		// 		'user.username',
-		// 		'user.createdAt',
-		// 		'articles.id',
-		// 		'articles.header',
-		// 		//'articles.description',
-		// 		'articles.createdAt',
-		// 	])
-		// 	.getOne();
-		const user = await this.usersRepository.findOne({
-			where: { id: userId },
-			select: {
-				username: true,
-			},
-		});
+		const user = await this.usersRepository
+			.createQueryBuilder('user')
+			.leftJoinAndSelect('user.articles', 'articles')
+			.where('user.id = :userId', { userId })
+			.select([
+				'user.username',
+				'user.createdAt',
+				'articles.id',
+				'articles.header',
+				'articles.createdAt',
+			])
+			.getOne();
 
 		if (!user) {
 			throw new NotFoundException('user not found');

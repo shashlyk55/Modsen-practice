@@ -13,6 +13,7 @@ import { Request } from 'express';
 import { ValidatedUser } from 'src/users/types/validated-user';
 import { ReactionType } from './reactions';
 import { AuthGuard } from '@nestjs/passport';
+import { ArticleExistsGuard } from 'src/articles/guards/article-exists.guard';
 
 @UseGuards(AuthGuard('jwt-access'))
 @Controller('reactions')
@@ -26,6 +27,7 @@ export class ReactionsController {
 	}
 
 	@Post('/:articleId')
+	@UseGuards(ArticleExistsGuard)
 	async addReaction(
 		@Param('articleId', ParseIntPipe) articleId: number,
 		@Req() req: Request,

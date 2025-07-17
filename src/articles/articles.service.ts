@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Article } from 'src/entities/article.entity';
 import { Repository } from 'typeorm';
@@ -8,8 +8,7 @@ import { ReactionType } from 'src/reactions/reactions';
 import { Reaction } from 'src/entities/reaction';
 import { SearchArticleDTO } from './dto/search-article.dto';
 import { FilterArticlesDTO } from './dto/article-filter.dto';
-// import { Tag } from 'src/entities/tag.entity';
-// import { AllowedTags } from 'src/tags/allowed-tags';
+import { articleFields } from './constants/select-fields';
 
 @Injectable()
 export class ArticlesService {
@@ -17,89 +16,6 @@ export class ArticlesService {
 		@InjectRepository(Article)
 		private articlesRepository: Repository<Article>,
 	) {}
-
-	async findByIdWithAdditions(articleId: number, currentUserId: number) {
-		const article = await this.articlesRepository.findOne({
-			where: { id: articleId },
-			relations: {
-				reactions: true,
-				tags: true,
-			},
-		});
-
-		const currentUserReaction: Reaction | undefined =
-			article?.reactions.find(
-				(reaction) => reaction.userId == currentUserId,
-			);
-
-		const reactionCounts =
-			article?.reactions?.reduce(
-				(acc, reaction) => {
-					acc[reaction.type] = (acc[reaction.type] || 0) + 1;
-					return acc;
-				},
-				{} as Record<ReactionType, number>,
-			) || {};
-
-		return {
-			...article,
-			reactions: reactionCounts,
-			currentUserReaction: currentUserReaction?.type || null,
-		};
-	}
-
-	async findById(articleId: number) {
-		const article = await this.articlesRepository.findOne({
-			where: { id: articleId },
-		});
-
-		return article;
-	}
-
-	async findAll() {
-		const articles = await this.articlesRepository.find({
-			order: { createdAt: 'DESC' },
-		});
-		return articles;
-	}
-
-	async findAllWithAdditions(currentUserId: number) {
-		const articles = await this.articlesRepository.find({
-			relations: { reactions: true, tags: true },
-			order: { createdAt: 'DESC' },
-		});
-
-		articles.sort((a, b) => b.reactions.length - a.reactions.length);
-
-		return articles.map((article) => {
-			const currentUserReaction = article.reactions?.find(
-				(reaction) => reaction.userId === currentUserId,
-			);
-
-			const reactionCounts =
-				article.reactions?.reduce(
-					(acc, reaction) => {
-						acc[reaction.type] = (acc[reaction.type] || 0) + 1;
-						return acc;
-					},
-					{} as Record<ReactionType, number>,
-				) || {};
-
-			return {
-				...article,
-				reactions: reactionCounts,
-				currentUserReaction: currentUserReaction?.type || null,
-			};
-		});
-	}
-
-	async findByUserId(userId: number) {
-		const articles = await this.articlesRepository.find({
-			where: { authorId: userId },
-		});
-
-		return articles;
-	}
 
 	async create(newArticleData: CreateArticleDTO, authorId: number) {
 		const createdArticle = this.articlesRepository.create({
@@ -117,12 +33,109 @@ export class ArticlesService {
 		}
 	}
 
-	async update(id: number, newArticleData: UpdateArticleDTO) {
+	async update(articleId: number, newArticleData: UpdateArticleDTO) {
+		await this.findById(articleId);
+
 		const article = await this.articlesRepository.preload({
-			id,
+			id: articleId,
 			...newArticleData,
 		});
+
+		if (article == undefined) {
+			throw new HttpException('Article not updated', 500);
+		}
+
 		return article;
+	}
+
+	async findById(articleId: number) {
+		const article = await this.articlesRepository.findOne({
+			where: { id: articleId },
+		});
+
+		if (article == null) {
+			throw new NotFoundException('Article not found');
+		}
+
+		return article;
+	}
+
+	async findByUserId(userId: number) {
+		const articles = await this.articlesRepository
+			.createQueryBuilder('article')
+			.leftJoinAndSelect('article.author', 'user')
+			.leftJoinAndSelect('article.tags', 'tags')
+			.leftJoinAndSelect('article.reactions', 'reactions')
+			.where('article.authorId = :userId', { userId })
+			.select(articleFields)
+			.orderBy('article.createdAt', 'ASC')
+			.getMany();
+
+		return articles.map((article) => {
+			return {
+				...article,
+				...this.CountArticleReactions(article, userId),
+			};
+		});
+	}
+
+	async findByIdWithAdditions(articleId: number, currentUserId: number) {
+		const article = await this.articlesRepository
+			.createQueryBuilder('article')
+			.leftJoinAndSelect('article.author', 'user')
+			.leftJoinAndSelect('article.tags', 'tags')
+			.leftJoinAndSelect('article.reactions', 'reactions')
+			.where('article.id = :articleId', { articleId })
+			.select(articleFields)
+			.getOne();
+
+		if (article == null) {
+			throw new NotFoundException('Article not found');
+		}
+
+		return {
+			...article,
+			...this.CountArticleReactions(article, currentUserId),
+		};
+	}
+
+	async findAllWithAdditions(currentUserId: number) {
+		const articles = await this.articlesRepository
+			.createQueryBuilder('article')
+			.leftJoinAndSelect('article.author', 'user')
+			.leftJoinAndSelect('article.tags', 'tags')
+			.leftJoinAndSelect('article.reactions', 'reactions')
+			.select(articleFields)
+			.orderBy('article.createdAt', 'ASC')
+			.getMany();
+
+		return articles.map((article) => {
+			return {
+				...article,
+				...this.CountArticleReactions(article, currentUserId),
+			};
+		});
+	}
+
+	private CountArticleReactions(article: Article, currentUserId: number) {
+		const reactionsCount =
+			article?.reactions?.reduce(
+				(acc, reaction) => {
+					acc[reaction.type] = (acc[reaction.type] || 0) + 1;
+					return acc;
+				},
+				{} as Record<ReactionType, number>,
+			) || {};
+
+		const currentUserReaction: Reaction | undefined =
+			article?.reactions.find(
+				(reaction) => reaction.userId == currentUserId,
+			);
+
+		return {
+			reactions: reactionsCount,
+			currentUserReaction: currentUserReaction?.type || null,
+		};
 	}
 
 	async search(searchDto: SearchArticleDTO) {
@@ -130,8 +143,10 @@ export class ArticlesService {
 
 		const [items, total] = await this.articlesRepository
 			.createQueryBuilder('article')
-			.leftJoinAndSelect('article.author', 'author')
+			.leftJoinAndSelect('article.author', 'user')
 			.leftJoinAndSelect('article.tags', 'tags')
+			.leftJoinAndSelect('article.reactions', 'reactions')
+			.select(articleFields)
 			.where(
 				'article.header ILIKE :query OR article.description ILIKE :query',
 				{ query: `%${query}%` },
@@ -160,8 +175,9 @@ export class ArticlesService {
 
 		const query = this.articlesRepository
 			.createQueryBuilder('article')
-			.leftJoinAndSelect('article.author', 'author')
+			.leftJoinAndSelect('article.author', 'user')
 			.leftJoinAndSelect('article.tags', 'tags')
+			.leftJoinAndSelect('article.reactions', 'reactions')
 			.orderBy('article.createdAt', 'DESC')
 			.skip((page - 1) * limit)
 			.take(limit);
@@ -174,8 +190,11 @@ export class ArticlesService {
 				{ tags },
 			);
 		}
+		query.select(articleFields);
 
 		const [items, total] = await query.getManyAndCount();
+
+		const totalPages = Math.ceil(total / limit);
 
 		return {
 			items,
@@ -183,7 +202,7 @@ export class ArticlesService {
 				totalItems: total,
 				itemCount: items.length,
 				itemsPerPage: limit,
-				totalPages: Math.ceil(total / limit),
+				totalPages,
 				currentPage: page,
 			},
 		};

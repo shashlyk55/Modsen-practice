@@ -19,11 +19,6 @@ export class ReactionsService {
 	}
 
 	async addReaction(articleId: number, userId: number, type: ReactionType) {
-		const article = await this.articlesService.findById(articleId);
-		if (article == null) {
-			throw new NotFoundException('article not found');
-		}
-
 		const existingReaction = await this.reactionsRepository.findOne({
 			where: {
 				userId: userId,

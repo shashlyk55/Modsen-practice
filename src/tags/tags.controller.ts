@@ -6,12 +6,16 @@ import {
 	ParseIntPipe,
 	Post,
 	Query,
+	Req,
 	UseGuards,
 } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { TagDTO } from './dto/tag.dto';
 import { ArticleOwnerGuard } from 'src/articles/guards/article-owner.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { ArticleExistsGuard } from 'src/articles/guards/article-exists.guard';
+import { Request } from 'express';
+import { ValidatedUser } from 'src/users/types/validated-user';
 
 @UseGuards(AuthGuard('jwt-access'))
 @Controller('tags')
@@ -30,13 +34,19 @@ export class TagsController {
 		return tags;
 	}
 
-	@UseGuards(ArticleOwnerGuard)
+	@UseGuards(ArticleExistsGuard, ArticleOwnerGuard)
 	@Post('/:articleId')
 	async replaceArticleTags(
+		@Req() req: Request,
 		@Param('articleId', ParseIntPipe) articleId: number,
 		@Body() tags: TagDTO[],
 	) {
-		const article = await this.tagsService.replaceTags(articleId, tags);
+		const userId = (req.user as ValidatedUser).id;
+		const article = await this.tagsService.replaceTags(
+			articleId,
+			userId,
+			tags,
+		);
 		return article;
 	}
 }
