@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Session } from 'src/entities/session.entity';
 import { Repository } from 'typeorm';
-import { User } from 'src/entities/user.entity';
+import { ValidatedUser } from 'src/users/types/validated-user';
 
 @Injectable()
 export class SessionsService {
@@ -12,7 +12,8 @@ export class SessionsService {
 	) {}
 
 	async createSession(
-		user: User,
+		//user: ValidatedUser,
+		userId: number,
 		accessToken: string,
 		refreshToken: string,
 		userAgent: string,
@@ -25,7 +26,7 @@ export class SessionsService {
 			userAgent,
 			ipAddress,
 			expiresAt,
-			user,
+			userId,
 		});
 		return this.sessionRepository.save(session);
 	}

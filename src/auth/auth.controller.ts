@@ -10,10 +10,10 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterUserDTO } from '../users/dto/register-user.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { LoginUserDTO } from 'src/users/dto/login-user.dto';
 import { Request } from 'express';
-import { JwtPayloadRefreshToken } from './types/jwt-payload-refresh-token';
-import { User } from 'src/entities/user.entity';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { ValidatedUser } from 'src/users/types/validated-user';
+import { CheckSessionGuard } from './guards/check-session.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -31,28 +31,22 @@ export class AuthController {
 
 	@Post('login')
 	@HttpCode(HttpStatus.OK)
-	async login(@Body() loginUserDto: LoginUserDTO, @Req() req: Request) {
-		const user = await this.authService.validateUser(
-			loginUserDto.username,
-			loginUserDto.password,
-		);
-		return this.authService.login(user as User, req);
+	@UseGuards(LocalAuthGuard)
+	async login(@Req() req: Request) {
+		return this.authService.login(req.user as ValidatedUser, req);
 	}
 
 	@Post('refresh')
 	@HttpCode(HttpStatus.OK)
-	@UseGuards(AuthGuard('jwt-refresh'))
-	refresh(@Req() req: Request & { user: JwtPayloadRefreshToken }) {
-		return this.authService.refreshTokens(req.user.refresh_token, req);
+	@UseGuards(AuthGuard('jwt-refresh'), CheckSessionGuard)
+	refresh(@Req() req: Request) {
+		return this.authService.refreshTokens(req);
 	}
 
 	@Post('logout')
 	@HttpCode(HttpStatus.OK)
 	@UseGuards(AuthGuard('jwt-access'))
 	async logout(@Req() req: Request) {
-		const authHeader = req.headers.authorization;
-		const accessToken = authHeader?.split(' ')[1].trim();
-
-		return this.authService.logout(accessToken);
+		return this.authService.logout(req);
 	}
 }

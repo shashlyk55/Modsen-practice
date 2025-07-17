@@ -11,29 +11,32 @@ import { User } from './user.entity';
 @Entity()
 export class Session {
 	@PrimaryGeneratedColumn()
-	id: string;
+	id!: string;
 
 	@Column({ unique: true })
-	accessTokenHash: string;
+	accessTokenHash!: string;
 
 	@Column({ unique: true })
-	refreshTokenHash: string;
+	refreshTokenHash!: string;
 
 	@Column()
-	userAgent: string;
+	userAgent!: string;
 
 	@Column()
-	ipAddress: string;
+	ipAddress!: string;
 
 	@CreateDateColumn()
-	createdAt: Date;
+	createdAt!: Date;
 
 	@UpdateDateColumn()
-	updatedAt: Date;
+	updatedAt!: Date;
 
 	@Column()
-	expiresAt: Date;
+	expiresAt!: Date;
 
 	@ManyToOne(() => User, (user) => user.sessions, { onDelete: 'CASCADE' })
-	user: User;
+	user!: User;
+
+	@Column()
+	userId!: number;
 }

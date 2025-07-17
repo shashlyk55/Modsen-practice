@@ -18,47 +18,7 @@ export class ReactionsService {
 		return reactionTypes;
 	}
 
-	// async getArticleReactions(articleId: number, currentUserId: number) {
-	// 	const article = await this.articlesService.findById(articleId);
-	// 	if (article == null) {
-	// 		throw new NotFoundException('article not found');
-	// 	}
-
-	// 	const reactionTypes = Object.values(ReactionType);
-	// 	const result: Partial<Record<ReactionType, number>> = {};
-
-	// 	for (const type of reactionTypes) {
-	// 		result[type] = await this.reactionsRepository.count({
-	// 			where: {
-	// 				articleId: articleId,
-	// 				type: type,
-	// 			},
-	// 		});
-	// 	}
-
-	// 	const currentUserReaction: Reaction | null =
-	// 		await this.reactionsRepository.findOne({
-	// 			where: {
-	// 				userId: currentUserId,
-	// 				articleId: articleId,
-	// 			},
-	// 			select: {
-	// 				type: true,
-	// 			},
-	// 		});
-
-	// 	return {
-	// 		reactions: result,
-	// 		currentUserReaction: currentUserReaction?.type || null,
-	// 	};
-	// }
-
 	async addReaction(articleId: number, userId: number, type: ReactionType) {
-		const article = await this.articlesService.findById(articleId);
-		if (article == null) {
-			throw new NotFoundException('article not found');
-		}
-
 		const existingReaction = await this.reactionsRepository.findOne({
 			where: {
 				userId: userId,
@@ -79,7 +39,7 @@ export class ReactionsService {
 		});
 		await this.reactionsRepository.save(reaction);
 
-		return this.articlesService.findByIdWithReactions(articleId, userId);
+		return this.articlesService.findByIdWithAdditions(articleId, userId);
 	}
 
 	private async deleteReaction(articleId: number, userId: number) {
@@ -98,7 +58,7 @@ export class ReactionsService {
 			articleId: articleId,
 		});
 
-		return this.articlesService.findByIdWithReactions(articleId, userId);
+		return this.articlesService.findByIdWithAdditions(articleId, userId);
 	}
 
 	private async changeReactionType(
@@ -116,6 +76,6 @@ export class ReactionsService {
 			},
 		);
 
-		return this.articlesService.findByIdWithReactions(articleId, userId);
+		return this.articlesService.findByIdWithAdditions(articleId, userId);
 	}
 }

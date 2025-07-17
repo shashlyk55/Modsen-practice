@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+	Injectable,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { RegisterUserDTO } from '../users/dto/register-user.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -6,8 +10,8 @@ import * as bcrypt from 'bcrypt';
 import { ValidatedUser } from 'src/users/types/validated-user';
 import { SessionsService } from '../sessions/sessions.service';
 import { Request } from 'express';
-import { User } from 'src/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
+import { Payload } from './types/payload';
 
 @Injectable()
 export class AuthService {
@@ -23,32 +27,24 @@ export class AuthService {
 		return user;
 	}
 
-	async login(user: User | undefined | null, req: Request) {
-		if (!user) {
-			throw new UnauthorizedException();
-		}
-		const payload: ValidatedUser = { username: user.username, id: user.id };
+	async login(user: ValidatedUser, req: Request) {
+		const payload: Payload = { username: user.username, id: user.id };
 
 		const userAgent = req.headers['user-agent']
 			? req.headers['user-agent']
 			: '';
-		const ipAddress = req.headers.host ? req.headers.host : '';
+		const ipAddress = req.ip ? req.ip : '';
+		const refreshTokenExpiresIn = Number.parseInt(
+			this.config
+				.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
+				.slice(
+					0,
+					this.config.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
+						.length - 1,
+				),
+		);
 		const expiresAt = new Date(
-			Date.now() +
-				Number.parseInt(
-					this.config
-						.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
-						.slice(
-							0,
-							this.config.getOrThrow<string>(
-								'REFRESH_TOKEN_EXPIRES_IN',
-							).length - 1,
-						),
-				) *
-					24 *
-					60 *
-					60 *
-					1000,
+			Date.now() + refreshTokenExpiresIn * 24 * 60 * 60 * 1000,
 		);
 
 		const accessToken = this.jwtService.sign(payload, {
@@ -66,7 +62,7 @@ export class AuthService {
 		});
 
 		await this.sessionService.createSession(
-			user,
+			user.id,
 			accessToken,
 			refreshToken,
 			userAgent,
@@ -93,25 +89,13 @@ export class AuthService {
 		return null;
 	}
 
-	async refreshTokens(refreshToken: string, req: Request) {
-		const session =
-			await this.sessionService.findSessionByRefreshToken(refreshToken);
+	async refreshTokens(req: Request) {
+		const user = req.user as ValidatedUser;
 
-		if (!session) {
-			throw new UnauthorizedException('Invalid refresh token');
-		}
-		if (session.expiresAt < new Date()) {
-			await this.sessionService.deleteSession(session.accessTokenHash);
-			throw new UnauthorizedException('Session expired');
-		}
-		await this.sessionService.deleteSession(session.accessTokenHash);
-
-		const user = session.user;
-		//const user = await this.usersService.findById(payload.userId);
 		if (!user) {
-			throw new Error('user not found');
+			throw new NotFoundException('user not found');
 		}
-		const newPayload: ValidatedUser = {
+		const newPayload: Payload = {
 			username: user.username,
 			id: user.id,
 		};
@@ -133,27 +117,23 @@ export class AuthService {
 		const userAgent = req.headers['user-agent']
 			? req.headers['user-agent']
 			: '';
-		const ipAddress = req.headers.host ? req.headers.host : '';
+
+		const ipAddress = req.ip ? req.ip : '';
+		const refreshTokenExpiresIn = Number.parseInt(
+			this.config
+				.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
+				.slice(
+					0,
+					this.config.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
+						.length - 1,
+				),
+		);
 		const expiresAt = new Date(
-			Date.now() +
-				Number.parseInt(
-					this.config
-						.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')
-						.slice(
-							0,
-							this.config.getOrThrow<string>(
-								'REFRESH_TOKEN_EXPIRES_IN',
-							).length - 1,
-						),
-				) *
-					24 *
-					60 *
-					60 *
-					1000,
+			Date.now() + refreshTokenExpiresIn * 24 * 60 * 60 * 1000,
 		);
 
 		await this.sessionService.createSession(
-			user,
+			user.id,
 			newAccessToken,
 			newRefreshToken,
 			userAgent,
@@ -163,14 +143,19 @@ export class AuthService {
 
 		return {
 			access_token: newAccessToken,
-			refresh_token: refreshToken,
+			refresh_token: newRefreshToken,
 		};
 	}
 
-	async logout(accessToken: string | undefined) {
+	async logout(req: Request) {
+		const authHeader = req.headers.authorization;
+		const accessToken = authHeader?.split(' ')[1].trim();
+		console.log(req);
+
 		if (!accessToken) {
 			throw new UnauthorizedException('token not found');
 		}
+
 		await this.sessionService.deleteSession(accessToken);
 		return { message: 'successfully logged out' };
 	}

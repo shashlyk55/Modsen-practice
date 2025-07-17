@@ -1,9 +1,19 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	Param,
+	ParseIntPipe,
+	Post,
+	Req,
+	UseGuards,
+} from '@nestjs/common';
 import { ReactionsService } from './reactions.service';
 import { Request } from 'express';
 import { ValidatedUser } from 'src/users/types/validated-user';
 import { ReactionType } from './reactions';
 import { AuthGuard } from '@nestjs/passport';
+import { ArticleExistsGuard } from 'src/articles/guards/article-exists.guard';
 
 @UseGuards(AuthGuard('jwt-access'))
 @Controller('reactions')
@@ -16,23 +26,13 @@ export class ReactionsController {
 		return reactions;
 	}
 
-	// @Get('/:articleId')
-	// async getArticleReactions(@Req() req: Request) {
-	// 	const articleId = parseInt(req.params.articleId);
-	// 	const userId = (req.user as ValidatedUser).id;
-	// 	const reactions = await this.reactionsService.getArticleReactions(
-	// 		articleId,
-	// 		userId,
-	// 	);
-	// 	return reactions;
-	// }
-
 	@Post('/:articleId')
+	@UseGuards(ArticleExistsGuard)
 	async addReaction(
+		@Param('articleId', ParseIntPipe) articleId: number,
 		@Req() req: Request,
 		@Body('reaction') type: ReactionType,
 	) {
-		const articleId = parseInt(req.params.articleId);
 		const userId = (req.user as ValidatedUser).id;
 		const article = await this.reactionsService.addReaction(
 			articleId,

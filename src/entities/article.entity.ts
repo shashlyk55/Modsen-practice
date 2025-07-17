@@ -10,37 +10,43 @@ import {
 import { User } from './user.entity';
 import { Comment } from './comment.entity';
 import { Reaction } from './reaction';
+import { Tag } from './tag.entity';
 
 @Entity()
 export class Article {
 	@PrimaryGeneratedColumn()
-	id: number;
+	id!: number;
 
 	@Column()
-	header: string;
+	header!: string;
 
 	@Column()
-	description: string;
+	description!: string;
 
 	@ManyToOne(() => User, (user) => user.articles, { onDelete: 'CASCADE' })
-	author: User;
+	author!: User;
 
 	@Column()
-	authorId: number;
+	authorId!: number;
 
 	@CreateDateColumn()
-	createdAt: Date;
+	createdAt!: Date;
 
 	@UpdateDateColumn()
-	updatedAt: Date;
+	updatedAt!: Date;
 
 	@OneToMany(() => Comment, (comment) => comment.article, {
 		onDelete: 'CASCADE',
 	})
-	comments: Comment[];
+	comments!: Comment[];
 
 	@OneToMany(() => Reaction, (reaction) => reaction.article, {
 		onDelete: 'CASCADE',
 	})
-	reactions: Reaction[];
+	reactions!: Reaction[];
+
+	@OneToMany(() => Tag, (tag) => tag.article, {
+		onDelete: 'CASCADE',
+	})
+	tags!: Tag[];
 }
