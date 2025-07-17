@@ -15,8 +15,9 @@ import { Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { CommentOwnerGuard } from './guards/comment-owner.guard';
 import { ValidatedUser } from 'src/users/types/validated-user';
+import { ArticleExistsGuard } from 'src/articles/guards/article-exists.guard';
 
-@UseGuards(AuthGuard('jwt-access'))
+@UseGuards(AuthGuard('jwt-access'), ArticleExistsGuard)
 @Controller('articles/:articleId/comments')
 export class CommentsController {
 	constructor(private commentsService: CommentsService) {}
@@ -27,7 +28,6 @@ export class CommentsController {
 		@Body() createCommentData: CreateCommentDTO,
 		@Req() req: Request,
 	) {
-		//const articleId = +req.params.articleId;
 		const authorId = (req.user as ValidatedUser).id;
 
 		const article = await this.commentsService.create(
@@ -42,7 +42,6 @@ export class CommentsController {
 	async getAllForArticle(
 		@Param('articleId', ParseIntPipe) articleId: number,
 	) {
-		//const articleId = +req.params.articleId;
 		const comments =
 			await this.commentsService.findAllForArticle(articleId);
 		return comments;
@@ -54,7 +53,6 @@ export class CommentsController {
 		@Param('articleId', ParseIntPipe) articleId: number,
 		@Param('commentId', ParseIntPipe) commentId: number,
 	) {
-		//const commentId = +req.params.commentId;
 		return await this.commentsService.delete(commentId);
 	}
 }

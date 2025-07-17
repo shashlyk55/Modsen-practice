@@ -31,13 +31,13 @@ export class AccessTokenStrategy extends PassportStrategy(
 	}
 	async validate(req: Request, payload: Payload): Promise<ValidatedUser> {
 		const authHeader = req.headers.authorization;
-		const token = authHeader?.split(' ')[1].trim();
+		const accessToken = authHeader?.split(' ')[1].trim();
 
-		if (!token) {
+		if (!accessToken) {
 			throw new UnauthorizedException('token not found');
 		}
 		const session =
-			await this.sessionService.findSessionByAccessToken(token);
+			await this.sessionService.findSessionByAccessToken(accessToken);
 
 		if (!session) {
 			throw new UnauthorizedException('Session not found');

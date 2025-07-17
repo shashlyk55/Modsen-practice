@@ -4,6 +4,7 @@ import { ArticlesService } from 'src/articles/articles.service';
 import { Comment } from 'src/entities/comment.entity';
 import { Repository } from 'typeorm';
 import { CreateCommentDTO } from './dto/create-comment.dto';
+import { commentFields } from './constants/select-fields';
 
 @Injectable()
 export class CommentsService {
@@ -17,13 +18,21 @@ export class CommentsService {
 		const comment = await this.commentsRepository.findOne({
 			where: { id },
 		});
+
+		if (comment == null) {
+			throw new NotFoundException('Comment not found');
+		}
+
 		return comment;
 	}
 
 	async findAllForArticle(articleId: number) {
-		const comments = await this.commentsRepository.find({
-			where: { article: { id: articleId } },
-		});
+		const comments = await this.commentsRepository
+			.createQueryBuilder('comment')
+			.leftJoinAndSelect('comment.author', 'user')
+			.select(commentFields)
+			.where('comment.articleId = :articleId', { articleId })
+			.getMany();
 
 		return comments;
 	}
@@ -33,11 +42,6 @@ export class CommentsService {
 		createCommentDto: CreateCommentDTO,
 		authorId: number,
 	) {
-		const article = await this.articlesService.findById(articleId);
-		if (!article) {
-			throw new NotFoundException('article not found');
-		}
-
 		const comment = this.commentsRepository.create({
 			...createCommentDto,
 			authorId,

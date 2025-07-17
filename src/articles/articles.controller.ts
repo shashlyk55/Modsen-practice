@@ -4,7 +4,6 @@ import {
 	Delete,
 	Get,
 	HttpCode,
-	HttpException,
 	HttpStatus,
 	NotFoundException,
 	Param,
@@ -38,14 +37,6 @@ export class ArticlesController {
 		searchDto: SearchArticleDTO,
 	) {
 		const articles = await this.articlesService.search(searchDto);
-
-		if (articles == null) {
-			throw new HttpException(
-				'articles not found',
-				HttpStatus.NO_CONTENT,
-			);
-		}
-
 		return articles;
 	}
 
@@ -56,14 +47,6 @@ export class ArticlesController {
 		filterDto: FilterArticlesDTO,
 	) {
 		const articles = await this.articlesService.filter(filterDto);
-
-		if (articles == null) {
-			throw new HttpException(
-				'articles not found',
-				HttpStatus.NO_CONTENT,
-			);
-		}
-
 		return articles;
 	}
 
@@ -80,7 +63,7 @@ export class ArticlesController {
 		);
 
 		if (article == null) {
-			throw new NotFoundException('article not found');
+			throw new NotFoundException('Article not found');
 		}
 
 		return article;
@@ -92,14 +75,6 @@ export class ArticlesController {
 		const userId = (req.user as ValidatedUser).id;
 		const articles =
 			await this.articlesService.findAllWithAdditions(userId);
-
-		if (articles == null) {
-			throw new HttpException(
-				'articles not found',
-				HttpStatus.NO_CONTENT,
-			);
-		}
-
 		return articles;
 	}
 
@@ -109,13 +84,6 @@ export class ArticlesController {
 		const userId = (req.user as ValidatedUser).id;
 		const articles = await this.articlesService.findByUserId(userId);
 
-		if (articles == null) {
-			throw new HttpException(
-				'articles not found',
-				HttpStatus.NO_CONTENT,
-			);
-		}
-
 		return articles;
 	}
 
@@ -123,14 +91,6 @@ export class ArticlesController {
 	@HttpCode(HttpStatus.OK)
 	async getByUserId(@Param('userId', ParseIntPipe) userId: number) {
 		const articles = await this.articlesService.findByUserId(userId);
-
-		if (articles == null) {
-			throw new HttpException(
-				'articles not found',
-				HttpStatus.NO_CONTENT,
-			);
-		}
-
 		return articles;
 	}
 

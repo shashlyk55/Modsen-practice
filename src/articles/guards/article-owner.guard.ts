@@ -3,7 +3,6 @@ import {
 	ExecutionContext,
 	ForbiddenException,
 	Injectable,
-	NotFoundException,
 } from '@nestjs/common';
 import { ArticlesService } from '../articles.service';
 import { Request } from 'express';
@@ -23,10 +22,6 @@ export class ArticleOwnerGuard implements CanActivate {
 		}
 
 		const article = await this.articleService.findById(articleId);
-
-		if (!article) {
-			throw new NotFoundException('article not found');
-		}
 
 		if (article.authorId !== userId) {
 			throw new ForbiddenException(
